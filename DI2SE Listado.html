@@ -37,15 +37,25 @@
         .table-container { background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px; overflow-x: auto; }
         table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.9rem; }
         th { background: #090d16; color: var(--accent); padding: 14px; border-bottom: 2px solid var(--border); }
-        td { padding: 12px 14px; border-bottom: 1px solid var(--border); }
+        td { padding: 12px 14px; border-bottom: 1px solid var(--border); vertical-align: middle; }
         tr:hover { background: rgba(51, 65, 85, 0.5); }
 
         .tag { display: inline-block; padding: 3px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; background: #334155; color: #f8fafc; }
         .tag-weapon { background: #9333ea; }
-        .tag-upgrade { background: #2563eb; }
 
-        .btn-sm { background: var(--accent); color: #000; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 0.8rem; }
+        .btn-group { display: flex; gap: 6px; }
+        .btn-sm { background: var(--accent); color: #000; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 0.75rem; }
         .btn-sm:hover { background: var(--accent-hover); color: white; }
+        .btn-secondary { background: #334155; color: var(--text-main); }
+        .btn-secondary:hover { background: #475569; }
+
+        .item-img { width: 45px; height: 45px; object-fit: contain; background: #090d16; border-radius: 6px; border: 1px solid var(--border); padding: 2px; cursor: pointer; transition: transform 0.2s; }
+        .item-img:hover { transform: scale(1.1); border-color: var(--accent); }
+
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.8); align-items: center; justify-content: center; }
+        .modal-content { max-width: 90%; max-height: 90%; object-fit: contain; border-radius: 8px; border: 2px solid var(--accent); background: #090d16; padding: 10px; }
+        .modal-close { position: absolute; top: 20px; right: 30px; color: #f8fafc; font-size: 40px; font-weight: bold; cursor: pointer; }
+        .modal-close:hover { color: var(--accent); }
     </style>
 </head>
 <body>
@@ -74,17 +84,23 @@
         <table>
             <thead>
                 <tr>
+                    <th style="width: 70px;">Img</th>
                     <th>Nombre Técnico (Name / ID)</th>
                     <th>Nombre Visible (UI)</th>
                     <th>Categoría / Tipo</th>
-                    <th>Acción</th>
+                    <th>Acciones</th>
                 </tr>
             </thead>
             <tbody id="tableBody">
-                <tr><td colspan="4" style="text-align: center; color: var(--text-muted); padding: 30px;">Carga los archivos CSV arriba para ver el listado.</td></tr>
+                <tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 30px;">Carga los archivos CSV arriba para ver el listado.</td></tr>
             </tbody>
         </table>
     </div>
+</div>
+
+<div id="imageModal" class="modal" onclick="cerrarModal()">
+    <span class="modal-close">&times;</span>
+    <img class="modal-content" id="imgAmpliada">
 </div>
 
 <script>
@@ -168,27 +184,50 @@ function filtrarTabla() {
     });
 
     if (rows.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: var(--text-muted); padding: 20px;">No se encontraron resultados.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 20px;">No se encontraron resultados.</td></tr>`;
         return;
     }
 
     rows.forEach(r => {
         const tr = document.createElement('tr');
+        const imagePath = `ITEMS IMG/${r.name}.png`;
+
         tr.innerHTML = `
+            <td>
+                <img src="${imagePath}" class="item-img" alt="" onclick="abrirModal('${imagePath}')" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                <div class="item-img" style="display:none; align-items:center; justify-content:center; font-size:9px; color:#64748b; text-align:center;">Sin img</div>
+            </td>
             <td><code>${r.name}</code></td>
             <td><strong>${r.ui_name}</strong></td>
             <td><span class="tag tag-weapon">${r.category}</span></td>
-            <td><button class="btn-sm" onclick="copiarTexto('${r.name}', this)">Copiar Name</button></td>
+            <td>
+                <div class="btn-group">
+                    <button class="btn-sm" type="button" onclick="copiarTexto(this, \`${r.name.replace(/\\/g, '\\\\').replace(/`/g, '\\`')}\`)">Copiar ID</button>
+                    <button class="btn-sm btn-secondary" type="button" onclick="copiarTexto(this, \`${r.ui_name.replace(/\\/g, '\\\\').replace(/`/g, '\\`')}\`)">Copiar UI</button>
+                </div>
+            </td>
         `;
         tbody.appendChild(tr);
     });
 }
 
-function copiarTexto(txt, btn) {
-    navigator.clipboard.writeText(txt);
-    const orig = btn.innerText;
-    btn.innerText = '¡Copiado!';
-    setTimeout(() => btn.innerText = orig, 1200);
+function abrirModal(src) {
+    const modal = document.getElementById('imageModal');
+    const modalImg = document.getElementById('imgAmpliada');
+    modal.style.display = 'flex';
+    modalImg.src = src;
+}
+
+function cerrarModal() {
+    document.getElementById('imageModal').style.display = 'none';
+}
+
+function copiarTexto(btn, txt) {
+    navigator.clipboard.writeText(txt).then(() => {
+        const orig = btn.innerText;
+        btn.innerText = '¡Copiado!';
+        setTimeout(() => btn.innerText = orig, 1200);
+    });
 }
 </script>
 </body>
