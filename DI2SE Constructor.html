@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DI2SE Constructor Avanzado de Comandos</title>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: rgba(30, 41, 59, 0.92);
+            --text-main: #f8fafc;
+            --text-muted: #cbd5e1;
+            --accent: #f59e0b;
+            --accent-hover: #d97706;
+            --code-bg: rgba(9, 13, 22, 0.95);
+            --border: #334155;
+            --success: #10b981;
+            --warning: #f43f5e;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: var(--bg-color); color: var(--text-main); padding: 20px; min-height: 100vh; }
+        .container { max-width: 950px; margin: 0 auto; }
+        
+        header { text-align: center; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 2px solid var(--border); }
+        h1 { color: var(--accent); font-size: 1.8rem; text-transform: uppercase; letter-spacing: 1px; }
+        .subtitle { color: var(--text-muted); font-size: 0.95rem; }
+
+        .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 10px; padding: 20px; margin-bottom: 20px; backdrop-filter: blur(8px); }
+        .card-title { color: var(--accent); font-size: 1.1rem; font-weight: bold; margin-bottom: 15px; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
+
+        .file-upload-box { display: flex; gap: 15px; align-items: center; flex-wrap: wrap; font-size: 0.9rem; color: var(--text-muted); }
+        .file-upload-box input[type="file"] { color: var(--text-main); font-size: 0.85rem; }
+
+        .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px; }
+        .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; }
+
+        .form-group { margin-bottom: 15px; }
+        label { display: block; font-size: 0.85rem; font-weight: bold; color: var(--text-muted); margin-bottom: 6px; }
+        select, input { width: 100%; padding: 10px 12px; border-radius: 6px; border: 1px solid var(--border); background: #090d16; color: var(--text-main); font-size: 0.95rem; outline: none; }
+        select:focus, input:focus { border-color: var(--accent); }
+
+        .searchable-select-container { display: flex; flex-direction: column; gap: 8px; }
+
+        .output-box { background: var(--code-bg); border: 2px solid var(--accent); border-radius: 8px; padding: 15px; position: relative; margin-top: 10px; }
+        .output-text { font-family: 'Consolas', monospace; color: #38bdf8; font-size: 0.95rem; word-break: break-all; padding-right: 90px; display: block; min-height: 24px; }
+        
+        .btn { background: var(--accent); color: #000; border: none; padding: 8px 16px; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 0.85rem; transition: background 0.2s; text-decoration: none; display: inline-block; }
+        .btn:hover { background: var(--accent-hover); color: #fff; }
+        .btn-copy { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); }
+        .btn-copy.copied { background: var(--success); color: #fff; }
+
+        .checkbox-group { display: flex; align-items: center; gap: 10px; margin-top: 10px; font-size: 0.9rem; color: var(--text-muted); cursor: pointer; }
+        .checkbox-group input { width: 18px; height: 18px; accent-color: var(--accent); cursor: pointer; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>🛠️ DI2SE Constructor de Comandos</h1>
+        <div class="subtitle">Generador Integrado con Guía Web v0.12.0 e Selector de Plataforma</div>
+    </header>
+
+    <div class="card" style="border-color: var(--accent);">
+        <div class="card-title">📂 Carga de Archivos CSV (Requerido para ítems y mejoras)</div>
+        <div class="file-upload-box">
+            <label>Selecciona tus archivos CSV:</label>
+            <input type="file" id="csvFileInput" accept=".csv" multiple onchange="cargarCSVsLocales(event)">
+            <span id="statusLoad" style="color: var(--warning); font-weight: bold;">⚠️ Sube los CSV para habilitar selectores inteligentes</span>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-title">1. Selección de Módulo y Acción</div>
+        <div class="grid-2">
+            <div class="form-group">
+                <label>Categoría de Comando:</label>
+                <select id="cmdCategory" onchange="cambiarCategoriaComando()">
+                    <optgroup label="1. Archivos Save">
+                        <option value="file_unpack">Desempaquetar Guardado (unpack)</option>
+                        <option value="file_pack">Reempaquetar Guardado (pack)</option>
+                    </optgroup>
+                    <optgroup label="2. Perfiles">
+                        <option value="profile_ls">Listar Personajes / Perfiles (profile ls)</option>
+                    </optgroup>
+                    <optgroup label="3. Inventario del Jugador">
+                        <option value="inv_ls">Listar Inventario (inventory ls)</option>
+                        <option value="inv_show">Ver Detalle de Objeto (inventory show)</option>
+                        <option value="inv_add" selected>Añadir Objeto Básico (inventory add)</option>
+                        <option value="inv_add_adv">Añadir Objeto Avanzado/Archetype</option>
+                        <option value="inv_clone">Duplicar / Clonar Objeto (inventory clone)</option>
+                        <option value="inv_edit">Editar Objeto Existente (inventory edit)</option>
+                        <option value="inv_rm">Eliminar Objeto (inventory rm)</option>
+                    </optgroup>
+                    <optgroup label="4. Mejoras y Mods">
+                        <option value="upg_add_name">Añadir Mejora por Nombre Corto</option>
+                        <option value="upg_add_archetype">Añadir Mejora por Archetype</option>
+                        <option value="upg_rm">Eliminar Mejora de Arma</option>
+                    </optgroup>
+                    <optgroup label="5. Baúl / Almacén (Stash)">
+                        <option value="stash_ls">Listar Baúl (stash ls)</option>
+                        <option value="stash_show">Ver Detalle en Baúl (stash show)</option>
+                        <option value="stash_add">Añadir Ítems al Baúl (stash add)</option>
+                        <option value="stash_clone">Clonar Ítem del Baúl (stash clone)</option>
+                        <option value="stash_edit">Editar Ítem del Baúl (stash edit)</option>
+                        <option value="stash_rm">Eliminar Ítem del Baúl (stash rm)</option>
+                    </optgroup>
+                    <optgroup label="6. Ediciones Rápidas (Quick Edits)">
+                        <option value="quick_xp">Maximizar Nivel / XP (max-xp)</option>
+                        <option value="quick_bp">Desbloquear Todos los Planos (unlock-blueprints)</option>
+                        <option value="quick_cb">Desbloquear Todos los Arrojadizos (unlock-curveballs)</option>
+                    </optgroup>
+                    <optgroup label="7. Ayuda y Búsqueda de Objetos">
+                        <option value="help_items">Listar Objetos Conocidos (help inventory items)</option>
+                        <option value="help_items_ext">Listar Ítems con DLC / IA / Internos</option>
+                        <option value="help_upgrades">Listar Mejoras Disponibles (help inventory upgrades)</option>
+                        <option value="help_quick">Listar Ediciones Rápidas (help quick)</option>
+                    </optgroup>
+                </select>
+            </div>
+            <div class="form-group" id="filterCatGroup">
+                <label>Filtrar por Categoría CSV:</label>
+                <select id="catFilter" onchange="filtrarItems()"></select>
+            </div>
+        </div>
+
+        <div class="form-group" id="itemSelectGroup">
+            <label id="itemLabel">Seleccionar Objeto / Arma:</label>
+            <div class="searchable-select-container">
+                <input type="text" id="itemSearchInput" placeholder="🔍 Escribe para buscar y filtrar ítems rápidamente..." oninput="filtrarItems()" disabled>
+                <select id="itemSelect" size="5" onchange="generarComando()" disabled style="height: 120px;"></select>
+            </div>
+        </div>
+    </div>
+
+    <div class="card" id="paramsCard">
+        <div class="card-title">2. Parámetros y Opciones del Comando</div>
+        <div class="grid-3">
+            <div class="form-group" id="groupRarity">
+                <label>Raridad (Rarity):</label>
+                <select id="paramRarity" onchange="generarComando()">
+                    <option value="common">COMMON</option>
+                    <option value="uncommon">UNCOMMON</option>
+                    <option value="rare">RARE</option>
+                    <option value="superior">SUPERIOR</option>
+                    <option value="legendary" selected>LEGENDARY</option>
+                </select>
+            </div>
+            <div class="form-group" id="groupLevel">
+                <label>Nivel (1-30):</label>
+                <input type="number" id="paramLevel" value="30" min="1" max="30" oninput="generarComando()">
+            </div>
+            <div class="form-group" id="groupCount">
+                <label>Cantidad (Count):</label>
+                <input type="number" id="paramCount" value="1" min="1" oninput="generarComando()">
+            </div>
+            <div class="form-group" id="groupDurability">
+                <label>Durabilidad:</label>
+                <input type="number" id="paramDurability" value="100.0" step="0.1" oninput="generarComando()">
+            </div>
+            <div class="form-group" id="groupSeed">
+                <label>Semilla (Seed):</label>
+                <input type="number" id="paramSeed" value="1234" oninput="generarComando()">
+            </div>
+            <div class="form-group" id="groupEntryId">
+                <label>ENTRY_ID (ID Único):</label>
+                <input type="text" id="paramEntryId" value="1" placeholder="Ej. 1" oninput="generarComando()">
+            </div>
+        </div>
+
+        <div class="grid-2">
+            <div class="form-group" id="groupProfile">
+                <label>Profile ID:</label>
+                <input type="text" id="paramProfile" placeholder="Ej. 0 (dejar en blanco para omitir)" oninput="generarComando()">
+            </div>
+            <div class="form-group" id="groupFile">
+                <label>Ubicación / Plataforma de Guardado (--file):</label>
+                <select id="paramPlatform" onchange="actualizarRutaArchivo()" style="margin-bottom: 8px;">
+                    <option value="steam">Steam (%LocalAppData%\DeadIslandSteam\Saved\SaveGames\DeadIsland2SaveGame.sav)</option>
+                    <option value="epic">Epic Games (%LocalAppData%\DeadIsland\Saved\SaveGames\DeadIsland2SaveGame.sav)</option>
+                    <option value="custom">Personalizado (Escribir ruta manual)</option>
+                </select>
+                <input type="text" id="paramFile" value='"%LocalAppData%\DeadIslandSteam\Saved\SaveGames\DeadIsland2SaveGame.sav"' oninput="generarComando()" disabled>
+            </div>
+        </div>
+
+        <div class="grid-2" id="extraFlagsGroup">
+            <div class="form-group" id="groupNg">
+                <label>New Game Plus (--ng+=):</label>
+                <select id="paramNg" onchange="generarComando()">
+                    <option value="0">0 (Partida Normal)</option>
+                    <option value="1">1 (NG+)</option>
+                </select>
+            </div>
+            <div class="form-group" id="groupHelpFlags" style="display:none;">
+                <label>Filtros de Ayuda Adicionales:</label>
+                <select id="paramHelpFlag" onchange="generarComando()">
+                    <option value="">-- Ninguno (Estándar) --</option>
+                    <option value="--include-dlc --include-ai --include-internal">Incluir DLC, IA e Internos</option>
+                    <option value="--only-dlc">Únicamente DLC</option>
+                    <option value="--only-ai">Únicamente IA</option>
+                    <option value="--only-internal">Únicamente Internos</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="checkbox-group">
+                <input type="checkbox" id="paramVersionSafety" checked onchange="generarComando()">
+                <span>Evitar error de versión de guardado reciente (Añadir <code>--no-version-safety</code>)</span>
+            </label>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-title">3. Comando Generado</div>
+        <div class="output-box">
+            <span class="output-text" id="commandOutput">Selecciona una categoría de comando para comenzar...</span>
+            <button class="btn btn-copy" onclick="copiarComando(this)">Copiar</button>
+        </div>
+    </div>
+</div>
+
+<script>
+let globalData = [];
+
+function parseCSV(text) {
+    const lines = text.split(/\r\n|\n/);
+    if (lines.length < 2) return [];
+    const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, ''));
+    let result = [];
+    for (let i = 1; i < lines.length; i++) {
+        if (!lines[i].trim()) continue;
+        const currentLine = lines[i].split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+        let obj = {};
+        headers.forEach((h, index) => {
+            let val = currentLine[index] ? currentLine[index].trim().replace(/^"|"$/g, '') : '';
+            obj[h] = val;
+        });
+        result.push(obj);
+    }
+    return result;
+}
+
+function cargarCSVsLocales(event) {
+    const files = event.target.files;
+    let pendingFiles = files.length;
+    globalData = [];
+
+    for (let file of files) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const parsed = parseCSV(e.target.result);
+            parsed.forEach(row => {
+                let name = row.name || row.ID || row.id || '';
+                let ui_name = row.ui_name || row.UIName || row.DisplayName || name;
+                let category = row.category || row.upgrade_type || row.Type || row.group || 'General';
+                if (name) {
+                    globalData.push({ name, ui_name, category });
+                }
+            });
+
+            pendingFiles--;
+            if (pendingFiles === 0) {
+                document.getElementById('statusLoad').style.color = 'var(--success)';
+                document.getElementById('statusLoad').innerHTML = `✅ Cargados (${globalData.length} registros)`;
+                document.getElementById('itemSearchInput').disabled = false;
+                document.getElementById('itemSelect').disabled = false;
+                poblarCategoriasFiltro();
+                filtrarItems();
+            }
+        };
+        reader.readAsText(file);
+    }
+}
+
+function poblarCategoriasFiltro() {
+    const catSelect = document.getElementById('catFilter');
+    catSelect.innerHTML = '<option value="ALL">-- Todas las Categorías --</option>';
+    const cats = [...new Set(globalData.map(d => d.category))].filter(Boolean).sort();
+    cats.forEach(c => {
+        catSelect.innerHTML += `<option value="${c}">${c}</option>`;
+    });
+}
+
+function filtrarItems() {
+    const cat = document.getElementById('catFilter').value;
+    const query = document.getElementById('itemSearchInput').value.toLowerCase();
+    const select = document.getElementById('itemSelect');
+    select.innerHTML = '';
+
+    let list = globalData.filter(i => {
+        const matchCat = (cat === 'ALL' || i.category === cat);
+        const matchQuery = !query || i.name.toLowerCase().includes(query) || i.ui_name.toLowerCase().includes(query);
+        return matchCat && matchQuery;
+    });
+
+    if (list.length === 0) {
+        select.innerHTML = `<option value="">No se encontraron elementos...</option>`;
+        return;
+    }
+
+    list.forEach(i => {
+        const label = i.ui_name !== i.name ? `${i.ui_name} (${i.name})` : i.name;
+        select.innerHTML += `<option value="${i.name}">${label}</option>`;
+    });
+
+    if (select.options.length > 0) select.selectedIndex = 0;
+    generarComando();
+}
+
+function actualizarRutaArchivo() {
+    const platform = document.getElementById('paramPlatform').value;
+    const fileInput = document.getElementById('paramFile');
+
+    if (platform === 'steam') {
+        fileInput.value = '"%LocalAppData%\\DeadIslandSteam\\Saved\\SaveGames\\DeadIsland2SaveGame.sav"';
+        fileInput.disabled = true;
+    } else if (platform === 'epic') {
+        fileInput.value = '"%LocalAppData%\\DeadIsland\\Saved\\SaveGames\\DeadIsland2SaveGame.sav"';
+        fileInput.disabled = true;
+    } else if (platform === 'custom') {
+        fileInput.value = ''; // Limpia el espacio al elegir personalizado
+        fileInput.disabled = false;
+        fileInput.focus();
+    }
+    generarComando();
+}
+
+function cambiarCategoriaComando() {
+    const cat = document.getElementById('cmdCategory').value;
+    
+    const needItem = ['inv_add', 'inv_add_adv', 'upg_add_name', 'upg_add_archetype', 'upg_rm', 'stash_add'].includes(cat);
+    const needEntryId = ['inv_show', 'inv_clone', 'inv_edit', 'inv_rm', 'upg_add_name', 'upg_add_archetype', 'upg_rm', 'stash_show', 'stash_clone', 'stash_edit', 'stash_rm'].includes(cat);
+    const needRarityLevel = ['inv_add', 'inv_edit', 'stash_add', 'stash_edit'].includes(cat);
+    const needDurabilitySeed = ['inv_edit', 'stash_edit'].includes(cat);
+    const needNg = cat.startsWith('stash_');
+    const needHelpFlags = cat === 'help_items_ext';
+    const needFile = !cat.startsWith('help_');
+
+    document.getElementById('itemSelectGroup').style.display = needItem ? 'block' : 'none';
+    document.getElementById('filterCatGroup').style.display = needItem ? 'block' : 'none';
+    
+    document.getElementById('groupEntryId').style.display = needEntryId ? 'block' : 'none';
+    document.getElementById('groupRarity').style.display = needRarityLevel ? 'block' : 'none';
+    document.getElementById('groupLevel').style.display = needRarityLevel ? 'block' : 'none';
+    document.getElementById('groupCount').style.display = (needRarityLevel || cat === 'inv_add_adv') ? 'block' : 'none';
+    document.getElementById('groupDurability').style.display = needDurabilitySeed ? 'block' : 'none';
+    document.getElementById('groupSeed').style.display = needDurabilitySeed ? 'block' : 'none';
+    
+    document.getElementById('groupNg').style.display = needNg ? 'block' : 'none';
+    document.getElementById('groupHelpFlags').style.display = needHelpFlags ? 'block' : 'none';
+    document.getElementById('groupFile').style.display = needFile ? 'block' : 'none';
+    document.getElementById('groupProfile').style.display = cat.startsWith('inv_') ? 'block' : 'none';
+
+    if (cat.includes('upg_')) {
+        document.getElementById('itemLabel').innerText = 'Seleccionar Mejora o Mod:';
+    } else {
+        document.getElementById('itemLabel').innerText = 'Seleccionar Objeto / Arma:';
+    }
+
+    generarComando();
+}
+
+function generarComando() {
+    const mod = document.getElementById('cmdCategory').value;
+    const file = document.getElementById('paramFile').value.trim();
+    const profile = document.getElementById('paramProfile').value.trim();
+    const item = document.getElementById('itemSelect').value || '<NOMBRE_OBJETO>';
+    const rarity = document.getElementById('paramRarity').value;
+    const level = document.getElementById('paramLevel').value;
+    const count = document.getElementById('paramCount').value;
+    const durability = document.getElementById('paramDurability').value;
+    const seed = document.getElementById('paramSeed').value;
+    const entryId = document.getElementById('paramEntryId').value || '<ENTRY_ID>';
+    const ng = document.getElementById('paramNg').value;
+    const helpFlag = document.getElementById('paramHelpFlag').value;
+    const useSafety = document.getElementById('paramVersionSafety').checked;
+
+    let safetyOpt = useSafety ? ' --no-version-safety' : '';
+    let cmd = '';
+
+    switch(mod) {
+        case 'file_unpack':
+            cmd = `di2save file unpack --file ${file} --output-file SaveGame.unpacked${safetyOpt}`;
+            break;
+        case 'file_pack':
+            cmd = `di2save file pack --file SaveGame.unpacked --output-file SaveGame.repacked${safetyOpt}`;
+            break;
+        case 'profile_ls':
+            cmd = `di2save player profile ls --file ${file}${safetyOpt}`;
+            break;
+        case 'inv_ls':
+            cmd = `di2save player inventory ls --file ${file} --profile ${profile || '<PROFILE_ID>'}${safetyOpt}`;
+            break;
+        case 'inv_show':
+            cmd = `di2save player inventory show ${entryId} --file ${file} --profile ${profile || '<PROFILE_ID>'}${safetyOpt}`;
+            break;
+        case 'inv_add':
+            cmd = `di2save player inventory add --file ${file} --profile ${profile || '<PROFILE_ID>'} --name ${item} --rarity ${rarity} --level ${level} --count ${count}${safetyOpt}`;
+            break;
+        case 'inv_add_adv':
+            cmd = `di2save player inventory add --file ${file} --profile ${profile || '<PROFILE_ID>'} --archetype <ARCHETYPE> --type MeleeWeaponArchetype --instanced true --count ${count}${safetyOpt}`;
+            break;
+        case 'inv_clone':
+            cmd = `di2save player inventory clone ${entryId} --file ${file} --profile ${profile || '<PROFILE_ID>'}${safetyOpt}`;
+            break;
+        case 'inv_edit':
+            cmd = `di2save player inventory edit --file ${file} --profile ${profile || '<PROFILE_ID>'} --item ${entryId} --level ${level} --rarity ${rarity} --durability ${durability} --count ${count} --seed ${seed}${safetyOpt}`;
+            break;
+        case 'inv_rm':
+            cmd = `di2save player inventory rm --file ${file} --profile ${profile || '<PROFILE_ID>'} ${entryId}${safetyOpt}`;
+            break;
+        case 'upg_add_name':
+            cmd = `di2save player inventory upgrade add --file ${file} --profile ${profile || '<PROFILE_ID>'} --item ${entryId} --name ${item}${safetyOpt}`;
+            break;
+        case 'upg_add_archetype':
+            cmd = `di2save player inventory upgrade add --file ${file} --profile ${profile || '<PROFILE_ID>'} --item ${entryId} --archetype <ARCHETYPE>${safetyOpt}`;
+            break;
+        case 'upg_rm':
+            cmd = `di2save player inventory upgrade rm --file ${file} --profile ${profile || '<PROFILE_ID>'} --item ${entryId} --name ${item}${safetyOpt}`;
+            break;
+        case 'stash_ls':
+            cmd = `di2save stash ls --file ${file} --ng+=${ng}${safetyOpt}`;
+            break;
+        case 'stash_show':
+            cmd = `di2save stash show ${entryId} --file ${file} --ng+=${ng}${safetyOpt}`;
+            break;
+        case 'stash_add':
+            cmd = `di2save stash add --file ${file} --name ${item} --rarity ${rarity} --level ${level} --count ${count} --ng+=${ng}${safetyOpt}`;
+            break;
+        case 'stash_clone':
+            cmd = `di2save stash clone ${entryId} --file ${file} --ng+=${ng}${safetyOpt}`;
+            break;
+        case 'stash_edit':
+            cmd = `di2save stash edit --file ${file} --item ${entryId} --level ${level} --rarity ${rarity} --durability ${durability} --count ${count} --ng+=${ng}${safetyOpt}`;
+            break;
+        case 'stash_rm':
+            cmd = `di2save stash rm --file ${file} ${entryId} --ng+=${ng}${safetyOpt}`;
+            break;
+        case 'quick_xp':
+            cmd = `di2save quick apply max-xp --file ${file}${safetyOpt}`;
+            break;
+        case 'quick_bp':
+            cmd = `di2save quick apply unlock-blueprints --file ${file}${safetyOpt}`;
+            break;
+        case 'quick_cb':
+            cmd = `di2save quick apply unlock-curveballs --file ${file}${safetyOpt}`;
+            break;
+        case 'help_items':
+            cmd = `di2save help inventory items`;
+            break;
+        case 'help_items_ext':
+            cmd = `di2save help inventory items ${helpFlag}`.trim();
+            break;
+        case 'help_upgrades':
+            cmd = `di2save help inventory upgrades`;
+            break;
+        case 'help_quick':
+            cmd = `di2save help quick`;
+            break;
+    }
+
+    document.getElementById('commandOutput').innerText = cmd;
+}
+
+function copiarComando(btn) {
+    const txt = document.getElementById('commandOutput').innerText;
+    navigator.clipboard.writeText(txt);
+    btn.innerText = '¡Copiado!';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.innerText = 'Copiar'; btn.classList.remove('copied'); }, 1500);
+}
+
+// Inicializar estado visual
+cambiarCategoriaComando();
+</script>
+</body>
+</html>

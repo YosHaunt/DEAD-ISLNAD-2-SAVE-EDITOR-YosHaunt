@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guía de Comandos v0.12.0 (YosHaunt) - Dead Island 2 Save Editor (DI2SE)</title>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: rgba(30, 41, 59, 0.85);
+            --text-main: #f8fafc;
+            --text-muted: #cbd5e1;
+            --accent: #f59e0b;
+            --accent-hover: #d97706;
+            --code-bg: rgba(9, 13, 22, 0.9);
+            --border-color: #334155;
+            --success: #10b981;
+            --danger: #ef4444;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.6;
+            padding: 20px;
+            position: relative;
+            min-height: 100vh;
+        }
+
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: linear-gradient(rgba(15, 23, 42, 0.85), rgba(15, 23, 42, 0.85)), url('DI2_BANNER.png');
+            background-repeat: no-repeat;
+            background-position: center;
+            background-size: cover;
+            background-attachment: fixed;
+            opacity: 0.35;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 25px;
+            padding: 25px 20px;
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            background-color: var(--card-bg);
+            backdrop-filter: blur(6px);
+        }
+
+        .header-logo {
+            max-width: 380px;
+            width: 100%;
+            height: auto;
+            margin-bottom: 15px;
+            display: inline-block;
+        }
+
+        h1 {
+            color: var(--accent);
+            font-size: 2rem;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.6);
+        }
+
+        .subtitle {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .search-box {
+            position: sticky;
+            top: 20px;
+            z-index: 100;
+            margin-bottom: 25px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 16px 20px;
+            font-size: 1.1rem;
+            border-radius: 8px;
+            border: 2px solid var(--accent);
+            background-color: var(--card-bg);
+            color: var(--text-main);
+            outline: none;
+            backdrop-filter: blur(8px);
+            transition: all 0.3s ease;
+        }
+
+        .search-box input:focus {
+            box-shadow: 0 0 15px rgba(245, 158, 11, 0.4);
+        }
+
+        .section-title {
+            color: var(--accent);
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 8px;
+            margin: 30px 0 15px 0;
+            font-size: 1.4rem;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 15px 20px;
+            margin-bottom: 15px;
+            backdrop-filter: blur(6px);
+            transition: transform 0.2s, border-color 0.2s;
+        }
+
+        .card:hover {
+            border-color: var(--accent);
+        }
+
+        .card-header {
+            font-weight: 600;
+            font-size: 1.05rem;
+            margin-bottom: 10px;
+            color: var(--text-main);
+        }
+
+        .command-container {
+            position: relative;
+            background-color: var(--code-bg);
+            border-radius: 6px;
+            padding: 12px 15px;
+            padding-right: 90px;
+            border: 1px solid #1e293b;
+            overflow-x: auto;
+        }
+
+        .command-text {
+            font-family: 'Consolas', 'Courier New', Courier, monospace;
+            color: #38bdf8;
+            font-size: 0.95rem;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+        .copy-btn, .action-btn {
+            background-color: var(--accent);
+            color: #000;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.85rem;
+            transition: background-color 0.2s;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .copy-btn {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        .copy-btn:hover, .action-btn:hover {
+            background-color: var(--accent-hover);
+            color: #fff;
+        }
+
+        .copy-btn.copied {
+            background-color: var(--success);
+            color: #fff;
+        }
+
+        .tools-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .tool-card {
+            background-color: var(--card-bg);
+            border: 2px solid var(--accent);
+            border-radius: 10px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            backdrop-filter: blur(8px);
+        }
+
+        .tool-card h3 {
+            color: var(--accent);
+            margin-bottom: 10px;
+        }
+
+        .tool-card p {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            margin-bottom: 15px;
+        }
+
+        .variables-list {
+            list-style: none;
+            background-color: var(--card-bg);
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid var(--accent);
+            backdrop-filter: blur(6px);
+        }
+
+        .variables-list li {
+            margin-bottom: 8px;
+            font-size: 0.95rem;
+        }
+
+        .variables-list li:last-child {
+            margin-bottom: 0;
+        }
+
+        .var-name {
+            color: #f43f5e;
+            font-family: monospace;
+            font-weight: bold;
+        }
+
+        .sub-list {
+            margin-left: 20px;
+            list-style: circle;
+            color: var(--text-muted);
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-muted);
+            font-size: 1.2rem;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <img src="DI2_LOGO.png" alt="Dead Island 2 Logo" class="header-logo">
+        <h1>Dead Island 2 Save Editor (DI2SE)</h1>
+        <div class="subtitle">Guía de Comandos (YosHaunt) - Versión 0.12.0</div>
+    </header>
+
+    <!-- HERRAMIENTAS WEB EXTERNAS -->
+    <h2 class="section-title">🧰 HERRAMIENTAS</h2>
+    <div class="tools-grid">
+        <div class="tool-card">
+            <div>
+                <h3>🛠️ Constructor de Comandos YosHaunt</h3>
+                <p>Genera líneas de comandos dinámicas utilizando la base de datos precargada desde CSV con todos los ítems, mejoras y parámetros del editor.</p>
+            </div>
+            <a href="DI2SE Constructor.html" class="action-btn" target="_blank">Abrir Constructor de Comandos ↗</a>
+        </div>
+
+        <div class="tool-card">
+            <div>
+                <h3>📋 Listado YosHaunt</h3>
+                <p>Explora, busca y filtra la lista completa de objetos, armas, perks y blueprints en formato web interactivo, simulando el comando <code>help inventory items</code>.</p>
+            </div>
+            <a href="DI2SE Listado.html" class="action-btn" target="_blank">Desplegar Lista de Ítems ↗</a>
+        </div>
+    </div>
+
+    <!-- Barra de Búsqueda -->
+    <div class="search-box">
+        <input type="text" id="searchInput" placeholder="🔍 Buscar comando, acción o variable... (ej. inventario, max-xp, stash)">
+    </div>
+
+    <!-- Lista de Variables -->
+    <div class="searchable-section">
+        <h2 class="section-title">--- VARIABLES PRINCIPALES ---</h2>
+        <ul class="variables-list">
+            <li><span class="var-name">&lt;RUTA_GUARDADO&gt;</span> : Ruta a tu archivo de guardado.
+                <ul class="sub-list">
+                    <li>Steam: <code>"%LocalAppData%\DeadIslandSteam\Saved\SaveGames\DeadIsland2SaveGame.sav"</code></li>
+                    <li>Epic: <code>"%LocalAppData%\DeadIsland\Saved\SaveGames\DeadIsland2SaveGame.sav"</code></li>
+                </ul>
+            </li>
+            <li><span class="var-name">&lt;PROFILE_ID&gt;</span> : ID alfanumérico del personaje.</li>
+            <li><span class="var-name">&lt;ENTRY_ID&gt;</span> : ID único del objeto (obtenido con el comando 'ls').</li>
+            <li><span class="var-name">&lt;NOMBRE_OBJETO&gt;</span> : Nombre del objeto (ej. <code>DA_MeleeWeaponArchetype_Katana</code>).</li>
+            <li><span class="var-name">&lt;NOMBRE_MEJORA&gt;</span> : Nombre de la mejora (ej. <code>DA_ItemUpgradeData_IncreaseReloadSpeed</code>).</li>
+            <li><span class="var-name">&lt;rarity&gt;</span> : <code>common</code> | <code>uncommon</code> | <code>rare</code> | <code>superior</code> | <code>legendary</code></li>
+            <li><span class="var-name">&lt;nivel&gt;</span> : Nivel del 1 al 30.</li>
+            <li><span class="var-name">&lt;cantidad&gt;</span> : Cantidad de objetos/dinero.</li>
+            <li><span class="var-name">&lt;durabilidad&gt;</span> : Valor numérico (ej. <code>100.0</code> o <code>9999.0</code>).</li>
+            <li><span class="var-name">&lt;seed&gt;</span> : Semilla numérica para stats (ej. <code>1234</code>).</li>
+        </ul>
+    </div>
+
+    <!-- Sección 1 -->
+    <div class="searchable-section">
+        <h2 class="section-title">1. DESEMPAQUETAR / EMPAQUETAR ARCHIVOS</h2>
+        
+        <div class="card">
+            <div class="card-header">Desempaquetar guardar:</div>
+            <div class="command-container">
+                <span class="command-text">di2save file unpack --file &lt;RUTA_GUARDADO&gt; --output-file SaveGame.unpacked</span>
+                <button class="copy-btn">Copiar</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">Reempaquetar guardar:</div>
+            <div class="command-container">
+                <span class="command-text">di2save file pack --file SaveGame.unpacked --output-file SaveGame.repacked</span>
+                <button class="copy-btn">Copiar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sección 2 -->
+    <div class="searchable-section">
+        <h2 class="section-title">2. PERFILES Y PERSONAJES</h2>
+        
+        <div class="card">
+            <div class="card-header">Listar personajes / perfiles:</div>
+            <div class="command-container">
+                <span class="command-text">di2save player profile ls --file &lt;RUTA_GUARDADO&gt;</span>
+                <button class="copy-btn">Copiar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sección 3 -->
+    <div class="searchable-section">
+        <h2 class="section-title">3. INVENTARIO DEL JUGADOR</h2>
+        
+        <div class="card">
+            <div class="card-header">Listar inventario:</div>
+            <div class="command-container">
+                <span class="command-text">di2save player inventory ls --file &lt;RUTA_GUARDADO&gt; --profile &lt;PROFILE_ID&gt;</span>
+                <button class="copy-btn">Copiar</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">Ver detalle de un objeto:</div>
+            <div class="command-container">
+                <span class="command-text">di2save player inventory show &lt;ENTRY_ID&gt; --file &lt;RUTA_GUARDADO&gt; --profile &lt;PROFILE_ID&gt;</span>
+                <button class="copy-btn">Copiar</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">Añadir objeto básico:</div>
+            <div class="command-container">
+                <span class="command-text">di2save player inventory add --file &lt;RUTA_GUARDADO&gt; --profile &lt;PROFILE_ID&gt; --name &lt;NOMBRE_OBJETO&gt; --rarity &lt;rarity&gt; --level &lt;nivel&gt; --count &lt;cantidad&gt;</span>
+                <button class="copy-btn">Copiar</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">Añadir objeto avanzado (no registrado):</div>
+            <div class="command-container">
+                <span class="command-text">di2save player inventory add --file &lt;RUTA_GUARDADO&gt; --profile &lt;PROFILE_ID&gt; --archetype &lt;ARCHETYPE&gt; --type MeleeWeaponArchetype --instanced true --count &lt;cantidad&gt;</span>
+                <button class="copy-btn">Copiar</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">Duplicar / Clonar objeto:</div>
+            <div class="command-container">
+                <span class="command-text">di2save player inventory clone &lt;ENTRY_ID&gt; --file &lt;RUTA_GUARDADO&gt; --profile &lt;PROFILE_ID&gt;</span>
+                <button class="copy-btn">Copiar</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">Editar objeto existente:</div>
+            <div class="command-container">
+                <span class="command-text">di2save player inventory edit --file &lt;RUTA_GUARDADO&gt; --profile &lt;PROFILE_ID&gt; --item &lt;ENTRY_ID&gt; --level &lt;nivel&gt; --rarity &lt;rarity&gt; --durability &lt;durabilidad&gt; --count &lt;cantidad&gt; --seed &lt;seed&gt;</span>
+                <button class="copy-btn">Copiar</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">Eliminar objeto:</div>
+            <div class="command-container">
+                <span class="command-text">di2save player inventory rm --file &lt;RUTA_GUARDADO&gt; --profile &lt;PROFILE_ID&gt; &lt;ENTRY_ID&gt;</span>
+                <button class="copy-btn">Copiar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sección 4 -->
+    <div class="searchable-section">
+        <h2 class="section-title">4. MEJORAS Y MODS DE ARMAS</h2>
+        
+        <div class="card">
+            <div class="card-header">Añadir mejora por nombre corto:</div>
+            <div class="command-container">
+                <span class="command-text">di2save player inventory upgrade add --file &lt;RUTA_GUARDADO&gt; --profile &lt;PROFILE_ID&gt; --item &lt;ENTRY_ID&gt; --name &lt;NOMBRE_MEJORA&gt;</span>
+                <button class="copy-btn">Copiar</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">Añadir mejora por Archetype:</div>
+            <div class="command-container">
+                <span class="command-text">di2save player inventory upgrade add --file &lt;RUTA_GUARDADO&gt; --profile &lt;PROFILE_ID&gt; --item &lt;ENTRY_ID&gt; --archetype &lt;ARCHETYPE&gt;</span>
+                <button class="copy-btn">Copiar</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">Eliminar mejora de un arma:</div>
+            <div class="command-container">
+                <span class="command-text">di2save player inventory upgrade rm --file &lt;RUTA_GUARDADO&gt; --profile &lt;PROFILE_ID&gt; --item &lt;ENTRY_ID&gt; --name &lt;NOMBRE_MEJORA&gt;</span>
+                <button class="copy-btn">Copiar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sección 5 -->
+    <div class="searchable-section">
+        <h2 class="section-title">5. BAÚL / ALMACÉN (STASH)</h2>
+        <p style="color: var(--text-muted); margin-bottom: 10px;"><em>(Nota: Para NG+ usa --ng+=1; para partida normal usa --ng+=0)</em></p>
+        
+        <div class="card">
+            <div class="card-header">Listar baúl:</div>
+            <div class="command-container">
+                <span class="command-text">di2save stash ls --file &lt;RUTA_GUARDADO&gt; --ng+=0</span>
+                <button class="copy-btn">Copiar</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">Ver detalle de ítem en baúl:</div>
+            <div class="command-container">
+                <span class="command-text">di2save stash show &lt;ENTRY_ID&gt; --file &lt;RUTA_GUARDADO&gt; --ng+=0</span>
+                <button class="copy-btn">Copiar</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">Añadir ítem al baúl:</div>
+            <div class="command-container">
+                <span class="command-text">di2save stash add --file &lt;RUTA_GUARDADO&gt; --name &lt;NOMBRE_OBJETO&gt; --rarity &lt;rarity&gt; --level &lt;nivel&gt; --count &lt;cantidad&gt; --ng+=0</span>
+                <button class="copy-btn">Copiar</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">Clonar ítem del baúl:</div>
+            <div class="command-container">
+                <span class="command-text">di2save stash clone &lt;ENTRY_ID&gt; --file &lt;RUTA_GUARDADO&gt; --ng+=0</span>
+                <button class="copy-btn">Copiar</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">Editar ítem del baúl:</div>
+            <div class="command-container">
+                <span class="command-text">di2save stash edit --file &lt;RUTA_GUARDADO&gt; --item &lt;ENTRY_ID&gt; --level &lt;nivel&gt; --rarity &lt;rarity&gt; --durability &lt;durabilidad&gt; --count &lt;cantidad&gt; --ng+=0</span>
+                <button class="copy-btn">Copiar</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">Eliminar ítem del baúl:</div>
+            <div class="command-container">
+                <span class="command-text">di2save stash rm --file &lt;RUTA_GUARDADO&gt; &lt;ENTRY_ID&gt; --ng+=0</span>
+                <button class="copy-btn">Copiar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sección 6 -->
+    <div class="searchable-section">
+        <h2 class="section-title">6. EDICIONES RÁPIDAS (QUICK EDITS)</h2>
+        
+        <div class="card">
+            <div class="card-header">Maximizar Nivel / XP:</div>
+            <div class="command-container">
+                <span class="command-text">di2save quick apply max-xp --file &lt;RUTA_GUARDADO&gt;</span>
+                <button class="copy-btn">Copiar</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">Desbloquear todos los Planos (Blueprints):</div>
+            <div class="command-container">
+                <span class="command-text">di2save quick apply unlock-blueprints --file &lt;RUTA_GUARDADO&gt;</span>
+                <button class="copy-btn">Copiar</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">Desbloquear todos los Arrojadizos (Curveballs):</div>
+            <div class="command-container">
+                <span class="command-text">di2save quick apply unlock-curveballs --file &lt;RUTA_GUARDADO&gt;</span>
+                <button class="copy-btn">Copiar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sección 7 -->
+    <div class="searchable-section">
+        <h2 class="section-title">7. AYUDA Y BÚSQUEDA DE NOMBRES DE OBJETOS</h2>
+        
+        <div class="card">
+            <div class="card-header">Listar objetos conocidos:</div>
+            <div class="command-container">
+                <span class="command-text">di2save help inventory items</span>
+                <button class="copy-btn">Copiar</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">Listar objetos incluyendo DLCs / IA / Internos:</div>
+            <div class="command-container">
+                <span class="command-text">di2save help inventory items --include-dlc --include-ai --include-internal</span>
+                <button class="copy-btn">Copiar</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">Listar únicamente ítems DLC / IA / Internos:</div>
+            <div class="command-container">
+                <span class="command-text">di2save help inventory items --only-dlc</span>
+                <button class="copy-btn">Copiar</button>
+            </div>
+            <div class="command-container" style="margin-top: 5px;">
+                <span class="command-text">di2save help inventory items --only-ai</span>
+                <button class="copy-btn">Copiar</button>
+            </div>
+            <div class="command-container" style="margin-top: 5px;">
+                <span class="command-text">di2save help inventory items --only-internal</span>
+                <button class="copy-btn">Copiar</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">Listar mejoras disponibles:</div>
+            <div class="command-container">
+                <span class="command-text">di2save help inventory upgrades</span>
+                <button class="copy-btn">Copiar</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">Listar ediciones rápidas:</div>
+            <div class="command-container">
+                <span class="command-text">di2save help quick</span>
+                <button class="copy-btn">Copiar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sección 8 -->
+    <div class="searchable-section">
+        <h2 class="section-title">8. SEGURIDAD (JUEGO ACTUALIZADO)</h2>
+        <div class="card">
+            <div class="card-header">Parámetro contra error de versión ("version of this file is too recent"):</div>
+            <p style="color: var(--text-muted); margin-bottom: 8px;">Añade este parámetro al final de cualquier comando.</p>
+            <div class="command-container">
+                <span class="command-text">--no-version-safety</span>
+                <button class="copy-btn">Copiar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="noResults" class="no-results hidden">
+        No se encontraron comandos o secciones que coincidan con la búsqueda.
+    </div>
+</div>
+
+<script>
+    document.querySelectorAll('.copy-btn').forEach(button => {
+        button.addEventListener('click', () => {
+            const container = button.parentElement;
+            const textToCopy = container.querySelector('.command-text').innerText;
+
+            navigator.clipboard.writeText(textToCopy).then(() => {
+                const originalText = button.innerText;
+                button.innerText = '¡Copiado!';
+                button.classList.add('copied');
+
+                setTimeout(() => {
+                    button.innerText = originalText;
+                    button.classList.remove('copied');
+                }, 1500);
+            });
+        });
+    });
+
+    const searchInput = document.getElementById('searchInput');
+    const sections = document.querySelectorAll('.searchable-section');
+    const noResults = document.getElementById('noResults');
+
+    searchInput.addEventListener('input', (e) => {
+        const query = e.target.value.toLowerCase().trim();
+        let totalVisible = 0;
+
+        sections.forEach(section => {
+            const cards = section.querySelectorAll('.card');
+            const isVariables = section.querySelector('.variables-list');
+            let sectionHasMatches = false;
+
+            if (isVariables) {
+                const text = section.innerText.toLowerCase();
+                if (text.includes(query)) {
+                    section.classList.remove('hidden');
+                    sectionHasMatches = true;
+                } else {
+                    section.classList.add('hidden');
+                }
+            } else {
+                cards.forEach(card => {
+                    const cardText = card.innerText.toLowerCase();
+                    if (cardText.includes(query)) {
+                        card.classList.remove('hidden');
+                    } else {
+                        card.classList.add('hidden');
+                    }
+                });
+
+                if (sectionHasMatches) {
+                    section.classList.remove('hidden');
+                } else {
+                    section.classList.add('hidden');
+                }
+            }
+
+            if (sectionHasMatches) {
+                totalVisible++;
+            }
+        });
+
+        if (totalVisible === 0) {
+            noResults.classList.remove('hidden');
+        } else {
+            noResults.classList.add('hidden');
+        }
+    });
+</script>
+
+</body>
+</html>
